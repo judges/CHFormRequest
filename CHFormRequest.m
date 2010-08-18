@@ -127,10 +127,38 @@
 	[super dealloc];
 }
 
+- (NSString *) formEncodeString:(NSString *)value {
+	NSMutableString * output = [NSMutableString string];
+	const char * source = [value UTF8String];
+	int sourceLen = strlen(source);
+	for (int i = 0; i < sourceLen; ++i) {
+		const unsigned char thisChar = (const unsigned char)source[i];
+		if (thisChar == ' '){
+			[output appendString:@"+"];
+		} else if (thisChar == '.' || thisChar == '-' || thisChar == '_' || thisChar == '~' || 
+				   (thisChar >= 'a' && thisChar <= 'z') ||
+				   (thisChar >= 'A' && thisChar <= 'Z') ||
+				   (thisChar >= '0' && thisChar <= '9')) {
+			[output appendFormat:@"%c", thisChar];
+		} else {
+			[output appendFormat:@"%%%02X", thisChar];
+		}
+	}
+	return output;
+}
+
 - (NSArray *) streamsForValues:(NSArray *)values inField:(NSString *)field boundary:(NSString *)boundaryString {
 	NSMutableArray * streams = [NSMutableArray array];
 	if ([values count] == 1) {
-		NSString * fieldBody = [NSString stringWithFormat:@"--%@\r\nContent-disposition: form-data; name=\"%@\"\r\n\r\n%@\r\n", boundaryString, field, [values objectAtIndex:0]];
+		NSArray * lines = [NSArray arrayWithObjects:
+						   [NSString stringWithFormat:@"--%@", boundaryString],
+						   [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"", field],
+						   @"Content-Type: application/x-www-form-urlencoded",
+						   @"",
+						   [self formEncodeString:[values objectAtIndex:0]],
+						   @"",
+						   nil];
+		NSString * fieldBody = [lines componentsJoinedByString:@"\r\n"];
 		PRINT_STRING(fieldBody);
 		NSInputStream * fieldStream = [NSInputStream inputStreamWithData:[fieldBody dataUsingEncoding:NSUTF8StringEncoding]];
 		[streams addObject:fieldStream];	
@@ -182,7 +210,7 @@
 		[fieldPool drain];
 	}
 	
-	NSString * footerString = [NSString stringWithFormat:@"--%@--\r\n\r\n", boundary];
+	NSString * footerString = [NSString stringWithFormat:@"--%@--", boundary];
 	PRINT_STRING(footerString);
 	NSInputStream * footerStream = [NSInputStream inputStreamWithData:[footerString dataUsingEncoding:NSUTF8StringEncoding]];
 	[inputStreams addObject:footerStream];
@@ -256,6 +284,21 @@
 	return (currentStream != nil);
 }
 
+- (NSData *) readData {
+	uint8_t buffer[64 * 1024];
+    NSMutableData * data = [NSMutableData data];
+    	
+	[self open];
+	
+    int bytesRead;
+    while ((bytesRead = [self read:buffer maxLength:sizeof(buffer)]) > 0) {
+        [data appendBytes: buffer length: bytesRead];
+    }
+	
+	[self close];
+	return data;
+}
+
 - (void)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode {
 	NSLog(@"%@", NSStringFromSelector(_cmd));
 }
@@ -263,6 +306,7 @@
 - (void) _scheduleInCFRunLoop: (NSRunLoop *) inRunLoop forMode: (id) inMode
 {
     // Safe to ignore this?
+	NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
 - (void) _setCFClientFlags: (CFOptionFlags)inFlags
@@ -270,6 +314,7 @@
                    context: (CFStreamClientContext) inContext
 {
     // Safe to ignore this?
+	NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
 @end
@@ -285,7 +330,7 @@
 		
 		CHFormRequestInputStream * inputStream = [[CHFormRequestInputStream alloc] initWithFields:fields];
 		
-		NSString * contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", [inputStream boundary]];
+		NSString * contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=\"%@\"", [inputStream boundary]];
 		[self setValue:contentType forHTTPHeaderField:@"Content-Type"];
 		
 		[super setHTTPBodyStream:inputStream];
@@ -320,34 +365,25 @@
 	}
 }
 
-- (void) setHTTPBody:(NSData *)data {
-	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
-}
+//- (void) setHTTPBody:(NSData *)data {
+//	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+//}
 
-- (void) setHTTPBodyStream:(NSInputStream *)stream {
-	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
-}
+//- (void) setHTTPBodyStream:(NSInputStream *)stream {
+//	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+//}
 
 - (void)setHTTPMethod:(NSString *)method {
 	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
 }
 
-- (void) dumpStream {
-    uint8_t buffer[64 * 1024];
-    NSMutableData * data = [NSMutableData data];
-    
+- (void) dumpStreamToBody {
 	CHFormRequestInputStream * s = [[CHFormRequestInputStream alloc] initWithFields:fields];
-	[s open];
-	
-    int bytesRead;
-    while ((bytesRead = [s read:buffer maxLength:sizeof(buffer)]) > 0) {
-        [data appendBytes: buffer length: bytesRead];
-    }
-	
-	[s close];
+	NSData * data = [s readData];
 	[s release];
-	
-	NSLog(@"read: %@", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+
+	[self setHTTPBody:data];
+	[self setValue:[NSString stringWithFormat:@"%ld", [data length]] forHTTPHeaderField:@"Content-Length"];
 }
 
 @end

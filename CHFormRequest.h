@@ -18,6 +18,6 @@
 
 - (void) addFile:(NSString *)filePath forFormField:(NSString *)field;
 
-- (void) dumpStream;
+- (void) dumpStreamToBody;
 
 @end

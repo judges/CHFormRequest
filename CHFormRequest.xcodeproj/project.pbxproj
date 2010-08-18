@@ -28,8 +28,6 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		559C26C6121A470900C6A6A5 /* CHFormRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CHFormRequest.h; sourceTree = "<group>"; };
 		559C26C7121A470900C6A6A5 /* CHFormRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CHFormRequest.m; sourceTree = "<group>"; };
-		559C26CB121AD3F800C6A6A5 /* DDMultipartInputStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDMultipartInputStream.h; sourceTree = "<group>"; };
-		559C26CC121AD3F800C6A6A5 /* DDMultipartInputStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDMultipartInputStream.m; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* CHFormRequest-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "CHFormRequest-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* CHFormRequest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CHFormRequest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -91,8 +89,6 @@
 				19C28FACFE9D520D11CA2CBB /* Products */,
 				559C26C6121A470900C6A6A5 /* CHFormRequest.h */,
 				559C26C7121A470900C6A6A5 /* CHFormRequest.m */,
-				559C26CB121AD3F800C6A6A5 /* DDMultipartInputStream.h */,
-				559C26CC121AD3F800C6A6A5 /* DDMultipartInputStream.m */,
 			);
 			name = CHFormRequest;
 			sourceTree = "<group>";
