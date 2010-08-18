@@ -21,7 +21,7 @@ Tested on Mac OS X 10.5+, should work on iOS 3+
 
 ##Credits
 
-Built by [Dave DeLong][1], with a heck of a lot of inspiration coming from [Dave Dribing][2], specifically [this file][3].
+Built by [Dave DeLong][1], with a heck of a lot of inspiration coming from [Dave Dribin][2], specifically [this file][3].
 
   [1]: http://davedelong.com
   [2]: http://www.dribin.org/dave/
