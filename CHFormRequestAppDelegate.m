@@ -17,11 +17,17 @@
 	// Insert code here to initialize your application 
 	
 	CHFormRequest * r = [[CHFormRequest alloc] initWithURL:[NSURL URLWithString:@"http://bing.com/search"]];
-	[r setURL:[NSURL URLWithString:@"http://localhost/post.php"]];
+	[r setURL:[NSURL URLWithString:@"http://davedelong.com/curl/post.php"]];
 	
 	[r setValue:@"HTTP Post Request" forFormField:@"q"];
+	[r setValue:@"HTTP Post Request1" forFormField:@"q1"];
+	[r setValue:@"HTTP Post Request2" forFormField:@"q2"];
+	[r setValue:@"HTTP Post Request3" forFormField:@"q3"];
+//	[r setFile:@"/Users/dave/Desktop/license.jpg" forFormField:@"file"];
+	[r setFile:@"/Library/User Pictures/Fun/Beach Ball.tif" forFormField:@"file"];
+//	[r setFile:@"/Library/User Pictures/Fun/Caduceus.tif" forFormField:@"file"];
 	
-	[r dumpStreamToBody];
+//	[r dumpStreamToBody];
 	
 	NSHTTPURLResponse * response = nil;
 	NSError * error = nil;
@@ -29,7 +35,6 @@
 	
 	NSLog(@"response: %@", response);
 	NSLog(@"error: %@, %@", error, [error userInfo]);
-//	NSLog(@"%@, %@", [[error userInfo] objectForKey:NSUnderlyingErrorKey], [[[error userInfo] objectForKey:NSUnderlyingErrorKey] userInfo]);
 	
 	NSLog(@"data: %@", [[[NSString alloc] initWithData:d encoding:NSUTF8StringEncoding] autorelease]);
 	

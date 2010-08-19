@@ -147,21 +147,29 @@
 	return output;
 }
 
-- (NSArray *) streamsForValues:(NSArray *)values inField:(NSString *)field boundary:(NSString *)boundaryString {
-	NSMutableArray * streams = [NSMutableArray array];
-	if ([values count] == 1) {
+- (NSArray *) streamsForValue:(id)value inField:(NSString *)field boundary:(NSString *)boundaryString {
+	if ([value isKindOfClass:[CHFormRequestFile class]]) {
+		return [value inputStreamsWithBoundary:boundaryString];
+	} else {
 		NSArray * lines = [NSArray arrayWithObjects:
 						   [NSString stringWithFormat:@"--%@", boundaryString],
 						   [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"", field],
 						   @"Content-Type: application/x-www-form-urlencoded",
 						   @"",
-						   [self formEncodeString:[values objectAtIndex:0]],
+						   [self formEncodeString:value],
 						   @"",
 						   nil];
 		NSString * fieldBody = [lines componentsJoinedByString:@"\r\n"];
 		PRINT_STRING(fieldBody);
 		NSInputStream * fieldStream = [NSInputStream inputStreamWithData:[fieldBody dataUsingEncoding:NSUTF8StringEncoding]];
-		[streams addObject:fieldStream];	
+		return [NSArray arrayWithObject:fieldStream];
+	}
+}
+
+- (NSArray *) streamsForValues:(NSArray *)values inField:(NSString *)field boundary:(NSString *)boundaryString {
+	NSMutableArray * streams = [NSMutableArray array];
+	if ([values count] == 1) {
+		[streams addObjectsFromArray:[self streamsForValue:[values objectAtIndex:0] inField:field boundary:boundaryString]];
 	} else {
 		CFUUIDRef subUUID = CFUUIDCreate(NULL);
 		NSString * subBoundary = (NSString *)CFMakeCollectable(CFUUIDCreateString(NULL, subUUID));
@@ -173,13 +181,7 @@
 		[streams addObject:sectionHeaderStream];
 		
 		for (id value in values) {
-			NSArray * valueStreams = nil;
-			if ([value isKindOfClass:[CHFormRequestFile class]]) {
-				valueStreams = [value inputStreamsWithBoundary:subBoundary];
-			} else {
-				valueStreams = [self streamsForValues:[NSArray arrayWithObject:value] inField:field boundary:subBoundary];
-			}
-			[streams addObjectsFromArray:valueStreams];
+			[streams addObjectsFromArray:[self streamsForValue:value inField:field boundary:subBoundary]];
 		}
 		
 		NSString * sectionFooter = [NSString stringWithFormat:@"--%@--\r\n", subBoundary];
@@ -195,11 +197,11 @@
 - (void) buildStreamsIfNeeded {
 	if ([inputStreams count] > 0) { return; }
 	
-//	NSString * headerString = [NSString stringWithFormat:@"Content-Type: multipart/form-data; boundary=%@\r\n\r\n", boundary];
-//	PRINT_STRING(headerString);
-//	NSInputStream * headerStream = [NSInputStream inputStreamWithData:[headerString dataUsingEncoding:NSUTF8StringEncoding]];
-//	[inputStreams addObject:headerStream];
-//	
+	//	NSString * headerString = [NSString stringWithFormat:@"Content-Type: multipart/form-data; boundary=%@\r\n\r\n", boundary];
+	//	PRINT_STRING(headerString);
+	//	NSInputStream * headerStream = [NSInputStream inputStreamWithData:[headerString dataUsingEncoding:NSUTF8StringEncoding]];
+	//	[inputStreams addObject:headerStream];
+	//	
 	for (NSString * field in fields) {
 		NSAutoreleasePool * fieldPool = [[NSAutoreleasePool alloc] init];
 		
@@ -248,6 +250,10 @@
 	}
 }
 
+- (void)stream:(NSStream *)theStream handleEvent:(NSStreamEvent)streamEvent {
+	[(id<NSStreamDelegate>)currentStream stream:theStream handleEvent:streamEvent];
+}
+
 - (NSStreamStatus) streamStatus {
 	return status;
 }
@@ -287,7 +293,7 @@
 - (NSData *) readData {
 	uint8_t buffer[64 * 1024];
     NSMutableData * data = [NSMutableData data];
-    	
+	
 	[self open];
 	
     int bytesRead;
@@ -340,38 +346,32 @@
 }
 
 - (void) setValue:(NSString *)value forFormField:(NSString *)field {
-	NSMutableArray * fieldValues = [NSMutableArray arrayWithObject:value];
-	[fields setObject:fieldValues forKey:field];
-}
-
-- (void) addValue:(NSString *)value forFormField:(NSString *)field {
-	NSMutableArray * fieldValues = [fields objectForKey:field];
-	if (fieldValues == nil) {
-		fieldValues = [NSMutableArray array];
+	if (value == nil) {
+		[fields removeObjectForKey:field];
+	} else {
+		NSMutableArray * fieldValues = [NSMutableArray arrayWithObject:value];
 		[fields setObject:fieldValues forKey:field];
 	}
-	[fieldValues addObject:value];
 }
 
-- (void) addFile:(NSString *)filePath forFormField:(NSString *)field {
-	CHFormRequestFile * file = [CHFormRequestFile fileWithPath:filePath];
-	if (file != nil) {
-		NSMutableArray * fieldFiles = [fields objectForKey:field];
-		if (fieldFiles == nil) {
-			fieldFiles = [NSMutableArray array];
-			[fields setObject:fieldFiles forKey:field];
+- (void) setFile:(NSString *)filePath forFormField:(NSString *)field {
+	if (filePath == nil) {
+		[fields removeObjectForKey:field];
+	} else {
+		CHFormRequestFile * file = [CHFormRequestFile fileWithPath:filePath];
+		if (file != nil) {
+			[fields setObject:[NSArray arrayWithObject:file] forKey:field];
 		}
-		[fieldFiles addObject:file];
 	}
 }
 
-//- (void) setHTTPBody:(NSData *)data {
-//	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
-//}
+- (void) setHTTPBody:(NSData *)data {
+	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+}
 
-//- (void) setHTTPBodyStream:(NSInputStream *)stream {
-//	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
-//}
+- (void) setHTTPBodyStream:(NSInputStream *)stream {
+	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
+}
 
 - (void)setHTTPMethod:(NSString *)method {
 	NSLog(@"do not use -[%@ %@]", NSStringFromClass([self class]), NSStringFromSelector(_cmd));
@@ -381,8 +381,8 @@
 	CHFormRequestInputStream * s = [[CHFormRequestInputStream alloc] initWithFields:fields];
 	NSData * data = [s readData];
 	[s release];
-
-	[self setHTTPBody:data];
+	
+	[super setHTTPBody:data];
 	[self setValue:[NSString stringWithFormat:@"%ld", [data length]] forHTTPHeaderField:@"Content-Length"];
 }
 

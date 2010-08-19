@@ -14,9 +14,9 @@
 }
 
 - (void) setValue:(NSString *)value forFormField:(NSString *)field;
-- (void) addValue:(NSString *)value forFormField:(NSString *)field;
+//- (void) addValue:(NSString *)value forFormField:(NSString *)field;
 
-- (void) addFile:(NSString *)filePath forFormField:(NSString *)field;
+- (void) setFile:(NSString *)filePath forFormField:(NSString *)field;
 
 - (void) dumpStreamToBody;
 
