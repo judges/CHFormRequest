@@ -17,7 +17,7 @@
 	// Insert code here to initialize your application 
 	
 	CHFormRequest * r = [[CHFormRequest alloc] initWithURL:[NSURL URLWithString:@"http://bing.com/search"]];
-	[r setURL:[NSURL URLWithString:@"http://davedelong.com/curl/post.php"]];
+	[r setURL:[NSURL URLWithString:@"http://localhost/post.php"]];
 	
 	[r setValue:@"HTTP Post Request" forFormField:@"q"];
 	[r setValue:@"HTTP Post Request1" forFormField:@"q1"];

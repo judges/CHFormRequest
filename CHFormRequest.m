@@ -8,8 +8,6 @@
 
 #import "CHFormRequest.h"
 
-#define PRINT_STRING(s) printf("%s", [(s) UTF8String])
-
 #pragma mark CHFormRequestFile
 
 @interface CHFormRequestFile : NSObject {
@@ -63,16 +61,13 @@
 	NSMutableArray * streams = [NSMutableArray array];
 	
 	NSString * header = [NSString stringWithFormat:@"--%@\r\nContent-Disposition: file; filename=\"%@\"\r\nContent-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n", boundary, [self fileName]];
-	PRINT_STRING(header);
 	NSInputStream * headerStream = [NSInputStream inputStreamWithData:[header dataUsingEncoding:NSUTF8StringEncoding]];
 	[streams addObject:headerStream];
 	
 	NSInputStream * fileStream = [NSInputStream inputStreamWithFileAtPath:path];
-	PRINT_STRING(([NSString stringWithFormat:@"<file: %@>", path]));
 	[streams addObject:fileStream];
 	
 	NSInputStream * footerStream = [NSInputStream inputStreamWithData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
-	PRINT_STRING(@"\r\n");
 	[streams addObject:footerStream];
 	
 	return streams;
@@ -160,7 +155,6 @@
 						   @"",
 						   nil];
 		NSString * fieldBody = [lines componentsJoinedByString:@"\r\n"];
-		PRINT_STRING(fieldBody);
 		NSInputStream * fieldStream = [NSInputStream inputStreamWithData:[fieldBody dataUsingEncoding:NSUTF8StringEncoding]];
 		return [NSArray arrayWithObject:fieldStream];
 	}
@@ -176,7 +170,6 @@
 		CFRelease(subUUID);
 		
 		NSString * sectionHeader = [NSString stringWithFormat:@"--%@\r\nContent-Disposition: form-data; name=\"%@\"\r\nContent-Type: multipart/mixed; boundary=%@\r\n\r\n", boundaryString, field, subBoundary];
-		PRINT_STRING(sectionHeader);
 		NSInputStream * sectionHeaderStream = [NSInputStream inputStreamWithData:[sectionHeader dataUsingEncoding:NSUTF8StringEncoding]];
 		[streams addObject:sectionHeaderStream];
 		
@@ -185,7 +178,6 @@
 		}
 		
 		NSString * sectionFooter = [NSString stringWithFormat:@"--%@--\r\n", subBoundary];
-		PRINT_STRING(sectionFooter);
 		NSInputStream * sectionFooterStream = [NSInputStream inputStreamWithData:[sectionFooter dataUsingEncoding:NSUTF8StringEncoding]];
 		[streams addObject:sectionFooterStream];
 		
@@ -197,11 +189,6 @@
 - (void) buildStreamsIfNeeded {
 	if ([inputStreams count] > 0) { return; }
 	
-	//	NSString * headerString = [NSString stringWithFormat:@"Content-Type: multipart/form-data; boundary=%@\r\n\r\n", boundary];
-	//	PRINT_STRING(headerString);
-	//	NSInputStream * headerStream = [NSInputStream inputStreamWithData:[headerString dataUsingEncoding:NSUTF8StringEncoding]];
-	//	[inputStreams addObject:headerStream];
-	//	
 	for (NSString * field in fields) {
 		NSAutoreleasePool * fieldPool = [[NSAutoreleasePool alloc] init];
 		
@@ -213,7 +200,6 @@
 	}
 	
 	NSString * footerString = [NSString stringWithFormat:@"--%@--", boundary];
-	PRINT_STRING(footerString);
 	NSInputStream * footerStream = [NSInputStream inputStreamWithData:[footerString dataUsingEncoding:NSUTF8StringEncoding]];
 	[inputStreams addObject:footerStream];
 }

@@ -7,8 +7,7 @@ An `NSMutableURLRequest` subclass to make POSTing form data easy.
 	CHFormRequest * r = [[CHFormRequest alloc] initWithURL:[NSURL URLWithString:@"http://example.com/myForm.php"]];
 	
 	[r setValue:@"test" forFormField:@"field1"];	
-	[r addValue:@"field2" forFormField:@"field2"];
-	[r addFile:@"/Users/example/Desktop/myFile.txt" forFormField:@"file"];
+	[r setFile:@"/Users/example/Desktop/myFile.txt" forFormField:@"file"];
 	
 	NSHTTPURLResponse * response = nil;
 	NSError * error = nil;
@@ -17,7 +16,7 @@ An `NSMutableURLRequest` subclass to make POSTing form data easy.
 
 ##Platforms
 
-Tested on Mac OS X 10.5+, should work on iOS 3+
+Tested on Mac OS X 10.5+, should work on iOS 3+.  However, it has to use a private `NSInputStream` method in order to work properly.  If you're trying to get this on the app store, let me know and I'll see if I can work around it.
 
 ##Credits
 
